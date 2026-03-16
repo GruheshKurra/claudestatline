@@ -1,64 +1,80 @@
 # claudestatline
 
-A minimal, curl-installable status line for [Claude Code](https://claude.ai/claude-code) that shows model, directory, context window, token usage, and a live **2x usage badge** tied to Anthropic's March 2026 promotion.
+A lightweight, curl-installable status line for [Claude Code](https://claude.ai/claude-code).
 
-## What it shows
+Shows your active model, working directory, context window, **live usage limits** (pulled directly from Anthropic's API), and a real-time **2x promotion badge** for the March 2026 usage promotion.
+
+---
+
+## Preview
 
 ```
-🤖 claude-sonnet-4-6 │ 📁 ~/Projects/myapp │ 💬 73% ctx │ ⚡ 82% 5h ·20m │ 📅 65% 7d ·20h22m │ 2x ON ·11d
+🤖 claude-sonnet-4-6 │ 📁 ~/Projects/myapp │ 💬 73% ctx │ ⚡ 19% 5h ·18m │ 📅 36% 7d ·20h │ 2x ON ·11d
 ```
 
 | Segment | Meaning |
 |---|---|
 | 🤖 `model` | Active Claude model |
-| 📁 `dir` | Current working directory (shortened) |
-| 💬 `X% ctx` | Remaining context window percentage |
-| 🦾 `agent` | Active sub-agent name (if any) |
-| 🌿 `branch` | Current git branch (if in a worktree) |
-| ⚡ `82% 5h ·20m` | **Remaining** 5-hour usage limit + time until window resets |
-| 📅 `65% 7d ·20h` | **Remaining** 7-day usage limit + time until window resets |
-| 🟢 `2x ON ·Xd` | 2x is active right now — X days left in promotion |
-| 🔴 `2x OFF ·Xd` | Peak hours — 2x paused, shows time until it resumes |
+| 📁 `dir` | Current working directory (last 2 path parts) |
+| 💬 `X% ctx` | Context window remaining |
+| 🦾 `agent` | Active sub-agent name (when running) |
+| 🌿 `branch` | Current git branch (when in a worktree) |
+| ⚡ `19% 5h ·18m` | 5-hour usage used · resets in 18m |
+| 📅 `36% 7d ·20h` | 7-day usage used · resets in 20h |
+| 🟢 `2x ON ·11d` | 2x promotion active, 11 days left |
+| 🔴 `2x OFF ·Xd` | Peak hours (2x paused), shows time until it resumes |
 
-Usage percentage colors: **green** >40% · **yellow** >15% · **red** ≤15%
+**Usage % colors:** green < 50% · yellow < 80% · red ≥ 80%
+
+---
 
 ## Install
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/GruheshKurra/claudestatline/main/install.sh | bash
+curl -sSLf https://raw.githubusercontent.com/GruheshKurra/claudestatline/main/install.sh | bash
 ```
 
-Restart Claude Code after installing.
+Then **restart Claude Code**.
 
-## Requirements
+### Requirements
 
+- macOS (uses Keychain to read your Claude Code auth token)
 - Python 3.8+
-- Claude Code CLI
-- `curl`
+- Claude Code CLI with an active login
+
+---
 
 ## How it works
 
-Three files are installed:
+Three files are installed into `~/.claude/` and `~/.local/bin/`:
 
-| File | Location | Role |
+| File | Installed to | Role |
 |---|---|---|
-| `claudestatline` | `~/.local/bin/` | Shell wrapper — caches token scan every 5 minutes |
-| `claudestatline.py` | `~/.claude/` | Reads status JSON from stdin, renders the line |
-| `claudestatline-tokens.py` | `~/.claude/` | Scans `~/.claude/projects/**/*.jsonl` for token usage |
+| `run.sh` | `~/.local/bin/claudestatline` | Shell wrapper — manages the 5-min cache refresh |
+| `statusline.py` | `~/.claude/claudestatline.py` | Reads Claude Code's status JSON from stdin, renders the line |
+| `tokens.py` | `~/.claude/claudestatline-tokens.py` | Fetches live usage data from Anthropic's API |
 
 `~/.claude/settings.json` is updated to point `statusLine.command` at the wrapper. Your original settings are backed up as `settings.json.bak`.
 
+### Usage data
+
+Usage limits are fetched directly from `https://api.anthropic.com/api/oauth/usage` using your Claude Code OAuth token (read from the macOS Keychain — no token is stored or hardcoded). Results are cached for 5 minutes and refreshed in the background so the status line never blocks.
+
+---
+
 ## The 2x badge — March 2026 promotion
 
-Anthropic's [March 2026 usage promotion](https://support.claude.com/en/articles/14063676-claude-march-2026-usage-promotion) doubles limits during off-peak hours from **March 13–27, 2026**.
+Anthropic's [March 2026 usage promotion](https://support.claude.com/en/articles/14063676-claude-march-2026-usage-promotion) doubles usage limits during off-peak hours from **March 13–27, 2026**.
 
-**2x is ON:** all weekends + weekdays outside 8 AM–2 PM ET (5:30 PM–11:30 PM IST)
-**2x is OFF:** weekdays 8 AM–2 PM ET only (5:30 PM–11:30 PM IST)
+| When | Badge |
+|---|---|
+| Weekends + weekdays outside 8 AM–2 PM ET | `🟢 2x ON ·Xd` |
+| Weekdays 8 AM–2 PM ET (peak hours) | `🔴 2x OFF ·Xd (on in Xh)` |
+| After March 27, 2026 | Badge disappears |
 
-The badge:
-- Shows **green `2x ON ·Xd`** when the doubled limits are active
-- Shows **red `2x OFF ·Xd (on in Xh)`** during peak hours, with time until it resumes
-- Disappears completely after March 27
+> For users in IST: peak hours are **5:30 PM – 11:30 PM IST** on weekdays.
+
+---
 
 ## Uninstall
 
@@ -67,13 +83,10 @@ rm -f ~/.local/bin/claudestatline \
        ~/.claude/claudestatline.py \
        ~/.claude/claudestatline-tokens.py \
        ~/.claude/claudestatline-cache.json
-```
-
-Then restore your original settings:
-
-```bash
 cp ~/.claude/settings.json.bak ~/.claude/settings.json
 ```
+
+---
 
 ## Author
 

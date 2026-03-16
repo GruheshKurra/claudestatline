@@ -18,24 +18,28 @@ command -v curl   &>/dev/null || fail "curl is required but not found"
 mkdir -p "${CLAUDE_DIR}" "${BIN_DIR}"
 
 log "Downloading statusline renderer..."
-curl -sSL "${REPO}/statusline.py" -o "${CLAUDE_DIR}/claudestatline.py"
+curl -sSLf "${REPO}/statusline.py" -o "${CLAUDE_DIR}/claudestatline.py" \
+    || fail "Failed to download statusline.py — check your internet connection"
 chmod +x "${CLAUDE_DIR}/claudestatline.py"
 
 log "Downloading token usage script..."
-curl -sSL "${REPO}/tokens.py" -o "${CLAUDE_DIR}/claudestatline-tokens.py"
+curl -sSLf "${REPO}/tokens.py" -o "${CLAUDE_DIR}/claudestatline-tokens.py" \
+    || fail "Failed to download tokens.py"
 chmod +x "${CLAUDE_DIR}/claudestatline-tokens.py"
 
 log "Downloading run script..."
-curl -sSL "${REPO}/run.sh" -o "${BIN_DIR}/claudestatline"
+curl -sSLf "${REPO}/run.sh" -o "${BIN_DIR}/claudestatline" \
+    || fail "Failed to download run.sh"
 chmod +x "${BIN_DIR}/claudestatline"
 
 if [ -f "${SETTINGS}" ]; then
-    cp "${SETTINGS}" "${SETTINGS}.bak"
+    cp "${SETTINGS}" "${SETTINGS}.bak" \
+        || fail "Could not back up settings.json (check permissions on ${SETTINGS})"
     log "Backed up existing settings to ${SETTINGS}.bak"
 fi
 
 if command -v python3 &>/dev/null && python3 -c "import json" &>/dev/null; then
-    python3 - <<PYEOF
+    python3 - <<'PYEOF'
 import json, os, sys
 
 settings_path = os.path.expanduser("~/.claude/settings.json")
@@ -62,7 +66,7 @@ ok "Installation complete!"
 ok "Restart Claude Code to see the updated status line."
 echo ""
 echo "  Status line will show:"
-echo "  🤖 model │ 📁 dir │ 💬 ctx% │ ⚡ 5h │ 📅 7d │ 🔥 2x ·Xd"
+echo "  🤖 model │ 📁 dir │ 💬 ctx% │ ⚡ 19% 5h ·18m │ 📅 36% 7d ·20h │ 2x ON ·11d"
 echo ""
-echo "  The 2x badge counts down to the 27th (promotional 2x usage window)."
-echo "  It flips to ○ 2x off after the 27th."
+echo "  Usage % = amount used (green <50%, yellow <80%, red ≥80%)"
+echo "  2x badge is live during Anthropic's March 2026 promotion (ends Mar 27)."

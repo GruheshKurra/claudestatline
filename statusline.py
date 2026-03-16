@@ -73,9 +73,9 @@ EDT = timezone(timedelta(hours=-4))
 now_edt = datetime.now(EDT)
 
 PROMO_START = datetime(2026, 3, 13, 0, 0, 0, tzinfo=EDT)
-PROMO_END   = datetime(2026, 3, 27, 23, 59, 59, tzinfo=EDT)
+PROMO_END   = datetime(2026, 3, 28, 0, 0, 0, tzinfo=EDT)
 
-in_promo = PROMO_START <= now_edt <= PROMO_END
+in_promo = PROMO_START <= now_edt < PROMO_END
 
 if in_promo:
     days_left = (date(2026, 3, 27) - now_edt.date()).days

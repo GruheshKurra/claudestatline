@@ -55,11 +55,13 @@ try:
     five_h  = data.get("five_hour") or {}
     seven_d = data.get("seven_day") or {}
 
-    five_h_used  = five_h.get("utilization") or 0
-    seven_d_used = seven_d.get("utilization") or 0
+    def to_pct(v):
+        if not v:
+            return 0
+        return round(v * 100) if v <= 1.0 else round(v)
 
-    five_h_used_pct  = round(five_h_used)
-    seven_d_used_pct = round(seven_d_used)
+    five_h_used_pct  = to_pct(five_h.get("utilization"))
+    seven_d_used_pct = to_pct(seven_d.get("utilization"))
 
     print(json.dumps({
         "five_h_used":       five_h_used_pct,
