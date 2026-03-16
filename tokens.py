@@ -1,52 +1,73 @@
 #!/usr/bin/env python3
-import json, glob, os, time
-from datetime import datetime, timedelta, timezone
+import json, subprocess, time, sys
+from datetime import datetime, timezone
+from urllib.request import urlopen, Request
+from urllib.error import URLError
 
-now = datetime.now(timezone.utc)
-windows = {
-    "5h": now - timedelta(hours=5),
-    "7d": now - timedelta(days=7),
-}
-totals = {"5h": 0, "7d": 0}
+USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
+BETA_HEADER = "oauth-2025-04-20"
 
-COUNTED_FIELDS = ("input_tokens", "output_tokens", "cache_creation_input_tokens")
 
-for path in glob.glob(os.path.expanduser("~/.claude/projects/**/*.jsonl"), recursive=True):
+def get_token():
     try:
-        with open(path) as f:
-            for raw in f:
-                try:
-                    entry = json.loads(raw.strip())
-                    ts_raw = entry.get("timestamp")
-                    usage = entry.get("message", {}).get("usage", {})
-                    if not usage or not ts_raw:
-                        continue
-                    if isinstance(ts_raw, str):
-                        ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00"))
-                    else:
-                        ts = datetime.fromtimestamp(ts_raw / 1000, tz=timezone.utc)
-                    tokens = sum(usage.get(k, 0) or 0 for k in COUNTED_FIELDS)
-                    for label, cutoff in windows.items():
-                        if ts > cutoff:
-                            totals[label] += tokens
-                except Exception:
-                    pass
+        raw = subprocess.check_output(
+            ["security", "find-generic-password", "-s", "Claude Code-credentials", "-w"],
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+        creds = json.loads(raw)
+        return creds["claudeAiOauth"]["accessToken"]
     except Exception:
-        pass
+        return None
 
 
-def compact(n):
-    if n >= 1_000_000:
-        return f"{n / 1_000_000:.1f}M"
-    if n >= 1_000:
-        return f"{n / 1_000:.0f}k"
-    return str(n)
+def time_until(iso_str):
+    try:
+        target = datetime.fromisoformat(iso_str)
+        now = datetime.now(timezone.utc)
+        secs = int((target - now).total_seconds())
+        if secs <= 0:
+            return "now"
+        h, m = divmod(secs // 60, 60)
+        if h > 0:
+            return f"{h}h{m:02d}m"
+        return f"{m}m"
+    except Exception:
+        return "?"
 
 
-print(json.dumps({
-    "tokens_5h": totals["5h"],
-    "tokens_7d": totals["7d"],
-    "fmt_5h": compact(totals["5h"]),
-    "fmt_7d": compact(totals["7d"]),
-    "ts": time.time(),
-}))
+token = get_token()
+
+if not token:
+    print(json.dumps({"error": "no_token", "ts": time.time()}))
+    sys.exit(0)
+
+try:
+    req = Request(
+        USAGE_URL,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "anthropic-beta": BETA_HEADER,
+        }
+    )
+    with urlopen(req, timeout=3) as resp:
+        data = json.loads(resp.read())
+
+    five_h  = data.get("five_hour") or {}
+    seven_d = data.get("seven_day") or {}
+
+    five_h_used  = five_h.get("utilization") or 0
+    seven_d_used = seven_d.get("utilization") or 0
+
+    five_h_remaining  = round(100 - five_h_used)
+    seven_d_remaining = round(100 - seven_d_used)
+
+    print(json.dumps({
+        "five_h_remaining":  five_h_remaining,
+        "seven_d_remaining": seven_d_remaining,
+        "five_h_resets_in":  time_until(five_h.get("resets_at", "")),
+        "seven_d_resets_in": time_until(seven_d.get("resets_at", "")),
+        "ts": time.time(),
+    }))
+
+except (URLError, Exception):
+    print(json.dumps({"error": "api_fail", "ts": time.time()}))

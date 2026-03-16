@@ -34,18 +34,40 @@ else:
     short_cwd = ""
 
 cache_path = sys.argv[1] if len(sys.argv) > 1 else ""
-fmt_5h = fmt_7d = ""
+five_h_remaining = seven_d_remaining = None
+five_h_resets_in = seven_d_resets_in = ""
+
 if cache_path and os.path.isfile(cache_path):
     try:
         cached = json.load(open(cache_path))
-        fmt_5h = cached.get("fmt_5h", "")
-        fmt_7d  = cached.get("fmt_7d", "")
+        if "error" not in cached:
+            five_h_remaining  = cached.get("five_h_remaining")
+            seven_d_remaining = cached.get("seven_d_remaining")
+            five_h_resets_in  = cached.get("five_h_resets_in", "")
+            seven_d_resets_in = cached.get("seven_d_resets_in", "")
     except Exception:
         pass
 
 GREEN = "\033[32m"
+YELLOW= "\033[33m"
 RED   = "\033[31m"
 RESET = "\033[0m"
+
+def usage_color(remaining):
+    if remaining is None:
+        return ""
+    if remaining > 40:
+        return GREEN
+    if remaining > 15:
+        return YELLOW
+    return RED
+
+def fmt_usage(remaining, resets_in, label):
+    if remaining is None:
+        return ""
+    color = usage_color(remaining)
+    reset_part = f" ·{resets_in}" if resets_in else ""
+    return f"{color}{remaining}%{RESET} {label}{reset_part}"
 
 EDT = timezone(timedelta(hours=-4))
 now_edt = datetime.now(EDT)
@@ -72,6 +94,9 @@ if in_promo:
 else:
     two_x_badge = ""
 
+five_h_str  = fmt_usage(five_h_remaining, five_h_resets_in, "5h")
+seven_d_str = fmt_usage(seven_d_remaining, seven_d_resets_in, "7d")
+
 segments = []
 if model:           segments.append(f"🤖 {model}")
 if short_cwd:       segments.append(f"📁 {short_cwd}")
@@ -79,8 +104,8 @@ if ctx is not None: segments.append(f"💬 {int(ctx)}% ctx")
 if agent:           segments.append(f"🦾 {agent}")
 if branch:          segments.append(f"🌿 {branch}")
 if vim:             segments.append(f"[{vim}]")
-if fmt_5h:          segments.append(f"⚡ {fmt_5h} 5h")
-if fmt_7d:          segments.append(f"📅 {fmt_7d} 7d")
+if five_h_str:      segments.append(f"⚡ {five_h_str}")
+if seven_d_str:     segments.append(f"📅 {seven_d_str}")
 if two_x_badge:     segments.append(two_x_badge)
 
 print(" │ ".join(segments))
