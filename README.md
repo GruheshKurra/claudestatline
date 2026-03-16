@@ -5,7 +5,7 @@ A minimal, curl-installable status line for [Claude Code](https://claude.ai/clau
 ## What it shows
 
 ```
-🤖 claude-sonnet-4-6 │ 📁 ~/Projects/myapp │ 💬 73% ctx │ ⚡ 142k 5h │ 📅 890k 7d │ 2x ON ·11d
+🤖 claude-sonnet-4-6 │ 📁 ~/Projects/myapp │ 💬 73% ctx │ ⚡ 82% 5h ·20m │ 📅 65% 7d ·20h22m │ 2x ON ·11d
 ```
 
 | Segment | Meaning |
@@ -15,10 +15,12 @@ A minimal, curl-installable status line for [Claude Code](https://claude.ai/clau
 | 💬 `X% ctx` | Remaining context window percentage |
 | 🦾 `agent` | Active sub-agent name (if any) |
 | 🌿 `branch` | Current git branch (if in a worktree) |
-| ⚡ `Xk 5h` | Tokens used in the last 5 hours |
-| 📅 `Xk 7d` | Tokens used in the last 7 days |
+| ⚡ `82% 5h ·20m` | **Remaining** 5-hour usage limit + time until window resets |
+| 📅 `65% 7d ·20h` | **Remaining** 7-day usage limit + time until window resets |
 | 🟢 `2x ON ·Xd` | 2x is active right now — X days left in promotion |
 | 🔴 `2x OFF ·Xd` | Peak hours — 2x paused, shows time until it resumes |
+
+Usage percentage colors: **green** >40% · **yellow** >15% · **red** ≤15%
 
 ## Install
 
