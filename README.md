@@ -75,4 +75,4 @@ cp ~/.claude/settings.json.bak ~/.claude/settings.json
 
 ## Author
 
-[Karthik Kurra](https://github.com/GruheshKurra)
+[Gruhesh Sri Sai Karthik Kurra](https://github.com/GruheshKurra)
