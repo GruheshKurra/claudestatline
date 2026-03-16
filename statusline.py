@@ -34,15 +34,15 @@ else:
     short_cwd = ""
 
 cache_path = sys.argv[1] if len(sys.argv) > 1 else ""
-five_h_remaining = seven_d_remaining = None
+five_h_used = seven_d_used = None
 five_h_resets_in = seven_d_resets_in = ""
 
 if cache_path and os.path.isfile(cache_path):
     try:
         cached = json.load(open(cache_path))
         if "error" not in cached:
-            five_h_remaining  = cached.get("five_h_remaining")
-            seven_d_remaining = cached.get("seven_d_remaining")
+            five_h_used       = cached.get("five_h_used")
+            seven_d_used      = cached.get("seven_d_used")
             five_h_resets_in  = cached.get("five_h_resets_in", "")
             seven_d_resets_in = cached.get("seven_d_resets_in", "")
     except Exception:
@@ -53,21 +53,21 @@ YELLOW= "\033[33m"
 RED   = "\033[31m"
 RESET = "\033[0m"
 
-def usage_color(remaining):
-    if remaining is None:
+def usage_color(used):
+    if used is None:
         return ""
-    if remaining > 40:
+    if used < 50:
         return GREEN
-    if remaining > 15:
+    if used < 80:
         return YELLOW
     return RED
 
-def fmt_usage(remaining, resets_in, label):
-    if remaining is None:
+def fmt_usage(used, resets_in, label):
+    if used is None:
         return ""
-    color = usage_color(remaining)
+    color = usage_color(used)
     reset_part = f" ·{resets_in}" if resets_in else ""
-    return f"{color}{remaining}%{RESET} {label}{reset_part}"
+    return f"{color}{used}%{RESET} {label}{reset_part}"
 
 EDT = timezone(timedelta(hours=-4))
 now_edt = datetime.now(EDT)
@@ -94,8 +94,8 @@ if in_promo:
 else:
     two_x_badge = ""
 
-five_h_str  = fmt_usage(five_h_remaining, five_h_resets_in, "5h")
-seven_d_str = fmt_usage(seven_d_remaining, seven_d_resets_in, "7d")
+five_h_str  = fmt_usage(five_h_used, five_h_resets_in, "5h")
+seven_d_str = fmt_usage(seven_d_used, seven_d_resets_in, "7d")
 
 segments = []
 if model:           segments.append(f"🤖 {model}")

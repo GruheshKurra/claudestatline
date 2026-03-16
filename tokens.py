@@ -58,12 +58,12 @@ try:
     five_h_used  = five_h.get("utilization") or 0
     seven_d_used = seven_d.get("utilization") or 0
 
-    five_h_remaining  = round(100 - five_h_used)
-    seven_d_remaining = round(100 - seven_d_used)
+    five_h_used_pct  = round(five_h_used)
+    seven_d_used_pct = round(seven_d_used)
 
     print(json.dumps({
-        "five_h_remaining":  five_h_remaining,
-        "seven_d_remaining": seven_d_remaining,
+        "five_h_used":       five_h_used_pct,
+        "seven_d_used":      seven_d_used_pct,
         "five_h_resets_in":  time_until(five_h.get("resets_at", "")),
         "seven_d_resets_in": time_until(seven_d.get("resets_at", "")),
         "ts": time.time(),
